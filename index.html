@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сертификаты на вокал</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="designs.js"></script>
+<style id="pageStyle"></style>
+<style>
+  :root {
+    --ui-bg: #121016;
+    --ui-panel: #1a171f;
+    --ui-line: #2c2833;
+    --ui-ink: #ece7f0;
+    --ui-dim: #8f879a;
+    --ui-accent: #e2bd72;
+    --ui-field: #221e28;
+  }
+  * { box-sizing: border-box; }
+  :root { color-scheme: dark; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-ink);
+    font: 14px/1.45 Manrope, system-ui, sans-serif;
+  }
+
+  /* ---------- App layout ---------- */
+  .app { display: grid; grid-template-columns: 380px 1fr; height: 100%; }  .panel {
+    background: var(--ui-panel);
+    border-right: 1px solid var(--ui-line);
+    overflow-y: auto;
+    padding: 22px 22px 40px;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3442 transparent;
+  }
+  .panel::-webkit-scrollbar { width: 10px; }
+  .panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb {
+    background: #3a3442; border-radius: 10px;
+    border: 3px solid var(--ui-panel); /* «отступ» вокруг ползунка */
+  }
+  .panel::-webkit-scrollbar-thumb:hover { background: var(--ui-accent); }
+
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .brand h1 { margin: 0; font: 700 16px/1.2 Manrope, sans-serif; letter-spacing: -.01em; }
+  .brand svg {
+    flex: 0 0 auto; width: 30px; height: 30px; padding: 7px;
+    border-radius: 8px; background: var(--ui-accent); color: #1a1408;
+  }
+
+  .group { border-top: 1px solid var(--ui-line); padding: 16px 0 6px; }
+  .group > h2 {
+    margin: 0 0 12px; font-size: 11px; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ui-dim);
+  }
+  .field { margin-bottom: 12px; }
+  .field > label, .label { display: block; font-size: 12px; color: var(--ui-dim); margin-bottom: 5px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > * { flex: 1; }
+  input[type=text], input[type=number], input[type=date], textarea, select {
+    width: 100%; background: var(--ui-field); color: var(--ui-ink);
+    border: 1px solid var(--ui-line); border-radius: 8px; padding: 8px 10px;
+    font: inherit; outline: none; transition: border-color .15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--ui-accent); }
+  textarea { resize: vertical; min-height: 56px; }
+  input[type=date] { color-scheme: dark; }
+  input[type=range] { width: 100%; accent-color: var(--ui-accent); }
+
+  .seg { display: flex; background: var(--ui-field); border: 1px solid var(--ui-line); border-radius: 9px; padding: 3px; gap: 3px; }
+  .seg button {
+    flex: 1; border: 0; background: transparent; color: var(--ui-dim); font: 600 13px Manrope, sans-serif;
+    padding: 7px 4px; border-radius: 6px; cursor: pointer; transition: .15s;
+  }
+  .seg button:hover { color: var(--ui-ink); }
+  .seg button.on { background: var(--ui-accent); color: #1a1408; }
+  .seg button:disabled { opacity: .35; cursor: not-allowed; }
+  .seg button small { display: block; font-weight: 400; font-size: 10px; opacity: .8; }
+
+  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .theme {
+    position: relative; aspect-ratio: 1.42; border-radius: 9px; cursor: pointer;
+    border: 2px solid transparent; overflow: hidden; padding: 0; display: flex; align-items: flex-end;
+    transition: transform .15s, border-color .15s;
+  }
+  .theme:hover { transform: translateY(-1px); }
+  .theme.on { border-color: var(--ui-accent); }
+  .theme span {
+    width: 100%; font: 600 11px Manrope, sans-serif; padding: 4px 6px; text-align: left;
+    background: linear-gradient(transparent, rgba(0,0,0,.55)); color: #fff;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--ui-field); color: var(--ui-ink); border: 1px solid var(--ui-line);
+    border-radius: 8px; padding: 8px 12px; font: 600 13px Manrope, sans-serif; cursor: pointer;
+  }
+  .btn:hover { border-color: var(--ui-accent); }
+  .btn.primary { background: var(--ui-accent); color: #1a1408; border-color: var(--ui-accent); }
+  .btn.icon { flex: 0 0 auto; padding: 8px 10px; }
+  .file-btn { position: relative; overflow: hidden; }
+  .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .note { font-size: 12px; color: var(--ui-dim); margin: 6px 0 0; }
+  .note b { color: var(--ui-ink); font-weight: 600; }
+  .hidden { display: none !important; }
+
+  .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .toolbar {
+    display: flex; align-items: center; gap: 14px; padding: 12px 22px;
+    border-bottom: 1px solid var(--ui-line); flex-wrap: wrap;
+  }
+  .toolbar .info { flex: 1; min-width: 200px; color: var(--ui-dim); font-size: 13px; }
+  .toolbar .info b { color: var(--ui-ink); font-weight: 600; }
+  .stage {
+    flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+    padding: 28px; overflow: hidden;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,.05) 1px, transparent 0) 0 0 / 18px 18px,
+      #0d0b10;
+  }
+  .sheet-wrap { flex: 0 0 auto; box-shadow: 0 20px 60px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.4); }
+  .sheet { position: relative; background: #fff; overflow: hidden; transform-origin: 0 0; }
+  .crop { position: absolute; background: #777; }
+
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; height: auto; }
+    .panel { border-right: 0; border-bottom: 1px solid var(--ui-line); padding: 18px 16px 24px; }
+    .main { height: 80vh; }
+    .stage { padding: 16px; }
+    .toolbar { padding: 12px 16px; }
+  }
+
+  /* ---------- Print ---------- */
+  @media print {
+    html, body { background: none !important; height: auto; }
+    .panel, .toolbar { display: none !important; }
+    .app, .main { display: block; height: auto; }
+    .stage { display: block; padding: 0; background: none; overflow: visible; }
+    .sheet-wrap { width: auto !important; height: auto !important; box-shadow: none; }
+    .sheet { transform: none !important; height: calc(var(--H) - .4mm) !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <div class="brand">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><g fill="currentColor"><rect x="0" y="6" width="2.4" height="4" rx="1.2"/><rect x="3.4" y="3" width="2.4" height="10" rx="1.2"/><rect x="6.8" y="0" width="2.4" height="16" rx="1.2"/><rect x="10.2" y="4" width="2.4" height="8" rx="1.2"/><rect x="13.6" y="6.5" width="2.4" height="3" rx="1.2"/></g></svg>
+      <h1>Подарочные сертификаты</h1>
+    </div>
+
+    <section class="group">
+      <h2>Дизайн</h2>
+      <div class="themes" id="themes"></div>
+      <div class="field" style="margin-top:12px">
+        <label>Свой фон (картинка вместо основного слоя)</label>
+        <div class="row">
+          <label class="btn file-btn">Загрузить…<input type="file" id="photo" accept="image/*"></label>
+          <button class="btn" id="photoClear" type="button">Убрать</button>
+        </div>
+      </div>
+      <div class="field" id="shadeField">
+        <label>Затемнение фона: <span id="shadeVal"></span>%</label>
+        <input type="range" min="0" max="90" step="5" data-key="shade">
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Текст</h2>
+      <div class="field"><label>Кому</label><input type="text" data-key="name"></div>
+      <div class="field"><label>Кто проводит занятия</label><input type="text" data-key="school"></div>
+      <div class="field">
+        <label>Количество занятий</label>
+        <div class="seg" data-key="mode">
+          <button data-v="count">Число</button>
+          <button data-v="many">Много</button>
+        </div>
+      </div>
+      <div class="field" id="countField">
+        <div class="row">
+          <input type="number" min="1" max="999" data-key="count">
+          <div class="seg" data-key="unit">
+            <button data-v="zan">занятий</button>
+            <button data-v="urok">уроков</button>
+          </div>
+        </div>
+      </div>
+      <div class="field" id="manyField"><input type="text" data-key="manyText"></div>
+      <div class="field"><label>Пожелание</label><textarea data-key="message" rows="2" placeholder="Пусть твой голос звучит!"></textarea></div>
+      <div class="field"><label>От кого</label><input type="text" data-key="from" placeholder="с любовью, Маша"></div>
+    </section>
+
+    <section class="group">
+      <h2>Детали</h2>
+      <div class="field"><label>Надпись сверху</label><input type="text" data-key="eyebrow"></div>
+      <div class="field"><label>Заголовок</label><input type="text" data-key="title"></div>
+      <div class="row">
+        <div class="field"><label>Перед именем</label><input type="text" data-key="forLabel"></div>
+        <div class="field"><label>Над школой</label><input type="text" data-key="schoolLabel"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Действует до</label><input type="date" data-key="until"></div>
+        <div class="field">
+          <label>Номер</label>
+          <div class="row"><input type="text" data-key="number"><button class="btn icon" id="rollNumber" type="button" title="Новый номер">↻</button></div>
+        </div>
+      </div>
+      <div class="field"><label>Контакты</label><input type="text" data-key="contacts" placeholder="+7 900 000-00-00 · @vocal"></div>
+      <div class="field"><label>QR-код: телефон или ссылка</label><input type="text" data-key="qr" placeholder="+7 900 000-00-00 или https://…"></div>
+    </section>
+
+    <section class="group">
+      <h2>Печать</h2>
+      <div class="field">
+        <label>Формат сертификата</label>
+        <div class="seg" data-key="format">
+          <button data-v="A4">A4<small>297×210</small></button>
+          <button data-v="A5">A5<small>210×148</small></button>
+          <button data-v="A6">A6<small>148×105</small></button>
+          <button data-v="DL">DL<small>210×99</small></button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="seg" data-key="orient">
+          <button data-v="landscape">Альбомная</button>
+          <button data-v="portrait">Книжная</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Бумага</label>
+        <div class="seg" data-key="layout">
+          <button data-v="single">Лист своего формата</button>
+          <button data-v="a4">Раскладка на A4</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Поля принтера: <span id="marginVal"></span> мм</label>
+        <input type="range" min="0" max="10" step="1" data-key="margin">
+        <p class="note">Большинство домашних принтеров не печатают в край — поставьте 3–5 мм, сертификат чуть уменьшится, а по меткам реза его легко обрезать. 0 мм — точный размер (для типографии или печати без полей).</p>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="toolbar">
+      <div class="info" id="info"></div>
+      <button class="btn primary" id="print" type="button">Печать / PDF</button>    </div>
+    <div class="stage" id="stage">
+      <div class="sheet-wrap" id="sheetWrap"><div class="sheet" id="sheet"></div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const FORMATS = { A4: [297, 210], A5: [210, 148], A6: [148, 105], DL: [210, 99] };
+const A4 = [210, 297];
+const STORE_KEY = 'vocal-cert-v1';
+
+const defaults = () => ({
+  theme: DESIGNS[0].id,
+  name: 'Анна Петрова',
+  school: 'Школа Саиды',
+  mode: 'count', count: 5, unit: 'zan', manyText: 'много занятий',
+  message: 'Пусть твой голос звучит смело и свободно!',
+  from: 'С ❤️ от Саши',
+  eyebrow: 'Подарочный сертификат',
+  title: 'на уроки вокала', 
+  forLabel: 'для',
+  schoolLabel: 'Занятия проводит',
+  until: addMonths(new Date(), 6),
+  number: randomNumber(),
+  contacts: '8 (800) 555-55-55',
+  qr: '8 (800) 555-55-55',
+  format: 'A5', orient: 'landscape', layout: 'single', margin: 4,
+  photo: null, shade: 40,
+});
+
+function addMonths(d, n) {
+  const x = new Date(d); x.setMonth(x.getMonth() + n);
+  return x.toISOString().slice(0, 10);
+}
+function randomNumber() { return String(Math.floor(1000 + Math.random() * 9000)); }
+
+let state = defaults();
+try { Object.assign(state, JSON.parse(localStorage.getItem(STORE_KEY) || '{}')); } catch (e) {}
+const design = () => DESIGNS.find(d => d.id === state.theme) || DESIGNS[0];
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch (e) { // картинка может не влезть в хранилище — сохраняем без неё
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ ...state, photo: null })); } catch (e2) {}
+  }
+}
+
+function plural(n, forms) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return forms[2];
+  if (b > 1 && b < 5) return forms[1];
+  if (b === 1) return forms[0];
+  return forms[2];
+}
+const UNITS = { zan: ['занятие', 'занятия', 'занятий'], urok: ['урок', 'урока', 'уроков'] };
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*г\.$/, '');
+}
+
+const r2 = n => Math.round(n * 100) / 100;
+
+/* ---------- Layout math ---------- */
+function certSize() {
+  const [a, b] = FORMATS[state.format];
+  return state.orient === 'landscape' ? [a, b] : [b, a];
+}
+
+function computeLayout() {
+  const [w, h] = certSize();
+  let W = w, H = h, cols = 1, rows = 1;
+  if (state.layout === 'a4' && state.format !== 'A4') {
+    let best = null;
+    for (const [pw, ph] of [A4, [A4[1], A4[0]]]) {
+      const c = Math.floor((pw + .01) / w), r = Math.floor((ph + .01) / h);
+      if (!best || c * r > best.c * best.r) best = { pw, ph, c, r };
+    }
+    ({ pw: W, ph: H, c: cols, r: rows } = best);
+  }
+  const m = +state.margin;
+  const s = Math.min(1, (W - 2 * m) / (cols * w), (H - 2 * m) / (rows * h));
+  const cw = w * s, ch = h * s;
+  return { w, h, W, H, cols, rows, s, cw, ch, ox: (W - cols * cw) / 2, oy: (H - rows * ch) / 2, m };
+}
+
+/* ---------- Rendering ---------- */
+const $ = s => document.querySelector(s);
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function buildCert(L) {
+  const d = design();
+  const { w, h } = L, u = Math.min(w, h) / 100;
+  const c = el('div', 'cert t-' + d.id);
+  c.style.width = L.cw + 'mm';
+  c.style.height = L.ch + 'mm';
+
+  const bg = el('div', 'layer bg'); bg.innerHTML = d.bg?.(w, h, u, state) ?? ''; c.append(bg);
+  if (state.photo) {
+    c.classList.add('has-photo');
+    const p = el('div', 'layer photo'); p.style.backgroundImage = `url("${state.photo}")`;
+    const sh = el('div', 'layer shade'); sh.style.opacity = state.shade / 100;
+    c.append(p, sh);
+  }
+  const deco = el('div', 'layer deco'); deco.innerHTML = d.deco?.(w, h, u, state) ?? ''; c.append(deco);
+
+  // Плоские блоки — раскладку по сетке задаёт дизайн (см. designs.js)
+  const txt = (tag, cls, s) => s ? el(tag, cls, s) : null;
+  const block = (cls, ...kids) => {
+    const b = el('div', cls);
+    kids = kids.filter(Boolean);
+    b.append(...kids);
+    if (!kids.length) b.classList.add('empty');
+    return b;
+  };
+
+  const art = el('div', 'art'); art.innerHTML = d.art?.(w, h, u, state) ?? '';
+
+  let name = null;
+  if (state.name) { name = el('div', 'name'); name.append(el('span', '', state.name)); }
+
+  const lessons = el('div', 'lessons');
+  if (state.mode === 'many') {
+    lessons.classList.add('many');
+    lessons.append(el('div', 'num', state.manyText));
+  } else {
+    const n = Math.max(1, parseInt(state.count) || 1);
+    lessons.append(el('div', 'num', n), el('div', 'unit', plural(n, UNITS[state.unit])));
+  }
+
+  const content = el('div', 'content');
+  content.append(
+    art,
+    block('head', txt('div', 'eyebrow', state.eyebrow), txt('div', 'title', state.title)),
+    block('who', name && txt('div', 'for', state.forLabel), name),
+    lessons,
+    block('msg', txt('div', 'text', state.message), txt('div', 'from', state.from)),
+    block('school', state.school && txt('small', '', state.schoolLabel), txt('b', '', state.school)),
+    block('meta',
+      state.number && txt('div', 'no', '№ ' + state.number),
+      state.until && txt('div', 'until', 'действует до ' + formatDate(state.until)),
+      txt('div', 'contacts', state.contacts)),
+    qrBlock(state.qr),
+  );
+  for (const [child, parent] of Object.entries(d.nest || {})) {
+    const ch = content.querySelector('.' + child), p = content.querySelector('.' + parent);
+    p.append(ch);
+    if (!ch.classList.contains('empty')) p.classList.remove('empty');
+  }
+  c.append(content);
+  return c;
+}
+
+// Телефон превращаем в tel:, всё остальное кодируем как есть
+function qrData(s) {
+  s = (s || '').trim();
+  const digits = s.replace(/[\s()\-]/g, '');
+  if (/^\+?\d{10,15}$/.test(digits)) return 'tel:' + (/^8\d{10}$/.test(digits) ? '+7' + digits.slice(1) : digits);
+  return s;
+}
+
+// QR как SVG с цветом currentColor — цвет и размер задаёт дизайн
+function qrBlock(value) {
+  const b = el('div', 'qr');
+  const data = qrData(value);
+  if (!data || !window.qrcode) { b.classList.add('empty'); return b; }
+  b.dataset.kind = data.startsWith('tel:') ? 'tel' : 'link'; // дизайн может подписать QR по-разному
+  const qr = qrcode(0, 'M');
+  qr.addData(unescape(encodeURIComponent(data))); // UTF-8 для ссылок с кириллицей
+  qr.make();
+  const n = qr.getModuleCount();
+  let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+  b.innerHTML = `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><path d="${d}" fill="currentColor"/></svg>`;
+  return b;
+}
+
+// Ужимаем имя по ширине и весь текст по высоте, чтобы ничего не вылезало
+function fit(cert) {
+  const content = cert.querySelector('.content');
+  const name = cert.querySelector('.name');
+  const fitName = () => {
+    if (!name) return;
+    name.style.setProperty('--fit', 1);
+    const span = name.firstChild, r = name.clientWidth / span.offsetWidth;
+    if (r < 1) name.style.setProperty('--fit', r * .97);
+  };
+  // .art — декор, ему можно вылезать за пределы
+  const overflows = () => {
+    const R = content.getBoundingClientRect();
+    // блоки с display: contents дизайн разбирает на части — проверяем их детей
+    const items = [...content.children].flatMap(e => getComputedStyle(e).display === 'contents' ? [...e.children] : [e]);
+    return items.some(e => {
+      if (e.classList.contains('art')) return false;
+      const r = e.getBoundingClientRect();
+      return r.right > R.right + 1 || r.bottom > R.bottom + 1 || e.scrollWidth > e.clientWidth + 2;
+    });
+  };
+  let k = 1;
+  content.style.setProperty('--k', k);
+  fitName();
+  while (overflows() && k > .4) {
+    k -= .03;
+    content.style.setProperty('--k', k);
+    fitName();
+  }
+}
+
+function cropMarks(sheet, L) {
+  if (L.m < 1.5) return;
+  const off = 1, len = Math.min(6, L.m - off - .3);
+  if (len <= .5) return;
+  const t = .15;
+  const add = (x, y, w, h) => {
+    const e = el('div', 'crop');
+    Object.assign(e.style, { left: x + 'mm', top: y + 'mm', width: w + 'mm', height: h + 'mm' });
+    sheet.append(e);
+  };
+  const x0 = L.ox, y0 = L.oy, x1 = L.ox + L.cols * L.cw, y1 = L.oy + L.rows * L.ch;
+  for (let i = 0; i <= L.cols; i++) {
+    const x = x0 + i * L.cw - t / 2;
+    add(x, y0 - off - len, t, len);
+    add(x, y1 + off, t, len);
+  }
+  for (let j = 0; j <= L.rows; j++) {
+    const y = y0 + j * L.ch - t / 2;
+    add(x0 - off - len, y, len, t);
+    add(x1 + off, y, len, t);
+  }
+}
+
+let L;
+function render() {
+  L = computeLayout();
+  const sheet = $('#sheet');
+  sheet.innerHTML = '';
+  sheet.style.width = L.W + 'mm';
+  sheet.style.height = L.H + 'mm';
+  sheet.style.setProperty('--H', L.H + 'mm');
+  $('#pageStyle').textContent = `@page { size: ${L.W}mm ${L.H}mm; margin: 0; }`;
+
+  const first = buildCert(L);
+  first.style.left = L.ox + 'mm'; first.style.top = L.oy + 'mm';
+  sheet.append(first);
+  fit(first);
+  for (let j = 0; j < L.rows; j++) for (let i = 0; i < L.cols; i++) {
+    if (!i && !j) continue;
+    const c = first.cloneNode(true);
+    c.style.left = (L.ox + i * L.cw) + 'mm'; c.style.top = (L.oy + j * L.ch) + 'mm';
+    sheet.append(c);
+  }
+  cropMarks(sheet, L);
+
+  const n = L.cols * L.rows;
+  const paper = state.layout === 'a4' && state.format !== 'A4' ? 'A4' : state.format;
+  const size = `${r2(L.cw)}×${r2(L.ch)} мм`;
+  $('#info').innerHTML = `Лист <b>${paper}</b> ${r2(L.W)}×${r2(L.H)} мм · <b>${n} шт.</b> · сертификат <b>${size}</b> · `
+    + (L.s >= .999 ? '<b>точный размер</b>' : `масштаб ${Math.round(L.s * 1000) / 10}%`);
+  scalePreview();
+}
+
+function scalePreview() {
+  if (!L) return;
+  const stage = $('#stage'), sheet = $('#sheet'), wrap = $('#sheetWrap');
+  const cs = getComputedStyle(stage);
+  const aw = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const ah = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const s = Math.min(aw / sheet.offsetWidth, ah / sheet.offsetHeight);
+  sheet.style.transform = `scale(${s})`;
+  wrap.style.width = sheet.offsetWidth * s + 'px';
+  wrap.style.height = sheet.offsetHeight * s + 'px';
+}
+
+/* ---------- Controls ---------- */
+let raf = 0;
+function update() {
+  save();
+  syncUI();
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(render);
+}
+
+function syncUI() {
+  document.querySelectorAll('[data-key]').forEach(c => {
+    const k = c.dataset.key;
+    if (c.classList.contains('seg')) {
+      c.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === state[k]));
+    } else if (document.activeElement !== c && c.value !== String(state[k] ?? '')) {
+      c.value = state[k] ?? '';
+    }
+  });
+  document.querySelectorAll('.theme').forEach(b => b.classList.toggle('on', b.dataset.v === state.theme));
+  $('#countField').classList.toggle('hidden', state.mode !== 'count');
+  $('#manyField').classList.toggle('hidden', state.mode !== 'many');
+  $('#shadeField').classList.toggle('hidden', !state.photo);
+  $('#photoClear').disabled = !state.photo;
+  $('#shadeVal').textContent = state.shade;
+  $('#marginVal').textContent = state.margin;
+  $('[data-key=layout] [data-v=a4]').disabled = state.format === 'A4';
+}
+
+const themesBox = $('#themes');
+if (!DESIGNS.some(d => d.id === state.theme)) state.theme = DESIGNS[0].id;
+DESIGNS.forEach(t => {
+  const b = el('button', 'theme');
+  b.type = 'button'; b.dataset.v = t.id;
+  b.style.background = t.swatch;
+  b.append(el('span', '', t.name));
+  b.onclick = () => { state.theme = t.id; update(); };
+  themesBox.append(b);
+});
+
+document.querySelectorAll('[data-key]').forEach(c => {
+  const k = c.dataset.key;
+  if (c.classList.contains('seg')) {
+    c.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b || b.disabled) return;
+      state[k] = b.dataset.v;
+      if (k === 'format' && state.format === 'A4') state.layout = 'single';
+      update();
+    });
+  } else {
+    c.addEventListener('input', () => {
+      state[k] = c.type === 'number' || c.type === 'range' ? +c.value : c.value;
+      update();
+    });
+  }
+});
+
+$('#rollNumber').onclick = () => { state.number = randomNumber(); update(); };
+
+$('#photo').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const img = new Image();
+  img.onload = () => {
+    // уменьшаем до ~3500px по длинной стороне: хватает для A4 при 300 dpi и не раздувает хранилище
+    const k = Math.min(1, 3508 / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    state.photo = cv.toDataURL('image/jpeg', .9);
+    URL.revokeObjectURL(img.src);
+    update();
+  };
+  img.src = URL.createObjectURL(f);
+  e.target.value = '';
+});
+$('#photoClear').onclick = () => { state.photo = null; update(); };
+
+$('#print').onclick = () => {
+  console.log('breakpoint is here in print')
+  window.print()
+};
+
+new ResizeObserver(scalePreview).observe($('#stage'));
+syncUI();
+render();
+document.fonts.ready.then(render);
+</script>
+</body>
+</html>
